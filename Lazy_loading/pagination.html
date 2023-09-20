@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Loading Users Example</title>
+</head>
+<body>
+    <div id="user-container"></div>
+    <div id="loading" style="display: none;">
+        <p>Loading users, please wait...</p>
+        <div class="loader"></div>
+    </div>
+    
+    <script>
+        const userContainer = document.getElementById("user-container");
+        const loading = document.getElementById("loading");
+        let page = 1; // Initial page number
+        let isLoading = false;
+
+        // Function to fetch and display users
+        function fetchUsers() {
+            if (isLoading) return;
+            isLoading = true;
+
+            loading.style.display = "block";
+
+            fetch(`https://randomuser.me/api/?page=${page}&results=10`)
+                .then(response => response.json())
+                .then(data => {
+                    isLoading = false;
+                    page++;
+                    setTimeout(() => { // Introduce a delay before displaying contents
+                        loading.style.display = "none";
+                        data.results.forEach(user => {
+                            const userElement = document.createElement("div");
+                            userElement.classList.add("user");
+                            userElement.innerHTML = `
+                                <img src="${user.picture.medium}" alt="${user.name.first} ${user.name.last}">
+                                <p>Name: ${user.name.first} ${user.name.last}</p>
+                                <p>Email: ${user.email}</p>
+                            `;
+                            userContainer.appendChild(userElement);
+                        });
+                    }, 2000); // Delay for 2 seconds (adjust as needed)
+                })
+                .catch(error => {
+                    isLoading = false;
+                    loading.style.display = "none";
+                    console.error("Error fetching users:", error);
+                });
+        }
+
+        // Function to check if the user has scrolled to the bottom of the page
+        function checkScroll() {
+            const scrollY = window.scrollY || window.pageYOffset;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+
+            if (scrollY + windowHeight >= documentHeight - 100) {
+                fetchUsers();
+            }
+        }
+
+        // Initial load of users
+        fetchUsers();
+
+        // Add scroll event listener to trigger lazy loading
+        window.addEventListener("scroll", checkScroll);
+    </script>
+
+    <style>
+        /* Add some basic styling for users */
+        .user {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        /* Styling for loading message and spinner */
+        #loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>
